@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hawker Videos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --cork: #a97c53;
+    --paper: #f3e9d6;
+    --paper-warm: #ece0c6;
+    --polaroid: #fdfaf2;
+    --ink: #3d3226;
+    --ink-soft: #6b5c46;
+    --ink-faint: #9a8a6f;
+    --tape-yellow: #e8dca4;
+    --dusty-red: #a8503f;
+    --dusty-red-soft: #c97b68;
+    --rec-red: #b0392b;
+    --hand: "Caveat", cursive;
+    --type: "Special Elite", "Courier Prime", monospace;
+    --body: "Courier Prime", "Special Elite", monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: var(--body);
+    background-color: var(--cork);
+    background-image:
+      radial-gradient(circle at 12% 22%, rgba(0,0,0,0.22) 0%, transparent 4%),
+      radial-gradient(circle at 30% 60%, rgba(0,0,0,0.18) 0%, transparent 4%),
+      radial-gradient(circle at 55% 15%, rgba(0,0,0,0.20) 0%, transparent 4%),
+      radial-gradient(circle at 70% 45%, rgba(0,0,0,0.16) 0%, transparent 4%),
+      radial-gradient(circle at 88% 70%, rgba(0,0,0,0.20) 0%, transparent 4%),
+      radial-gradient(circle at 20% 85%, rgba(0,0,0,0.17) 0%, transparent 4%),
+      radial-gradient(circle at 45% 40%, rgba(0,0,0,0.14) 0%, transparent 4%),
+      radial-gradient(circle at 78% 12%, rgba(0,0,0,0.18) 0%, transparent 4%),
+      radial-gradient(circle at 95% 90%, rgba(0,0,0,0.16) 0%, transparent 4%),
+      radial-gradient(circle at 5% 50%, rgba(0,0,0,0.15) 0%, transparent 4%);
+    background-size: 60px 60px, 70px 70px, 55px 55px, 65px 65px, 60px 60px, 75px 75px, 50px 50px, 68px 68px, 58px 58px, 62px 62px;
+    background-attachment: fixed;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: 640px; margin: 0 auto; padding: 20px 14px 70px; }
+
+  .tape{
+    display:inline-block;
+    background: var(--tape-yellow);
+    color: var(--ink-soft);
+    font-family: var(--type);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    position: relative;
+    clip-path: polygon(2% 10%, 8% 0%, 94% 4%, 100% 15%, 97% 92%, 92% 100%, 5% 96%, 0% 85%);
+  }
+
+  .header-wrap{ margin-bottom: 18px; }
+  .photo-upload-zone{
+    width: 100%;
+    min-height: 180px;
+    border: 2px dashed rgba(0,0,0,0.25);
+    border-radius: 6px;
+    display:flex; align-items:center; justify-content:center;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    background: var(--polaroid);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  }
+  .photo-upload-zone:hover{ border-color: rgba(0,0,0,0.4); }
+  .photo-upload-zone img{ width:100%; height:100%; object-fit: cover; display:block; }
+  .photo-upload-zone .placeholder{
+    text-align:center; color: var(--ink-faint); font-family: var(--type); font-size: 12px;
+    padding: 8px; line-height: 1.5;
+  }
+  .photo-upload-zone .placeholder .plus{ font-size: 24px; display:block; margin-bottom: 6px; }
+  .photo-upload-zone input[type=file]{ display:none; }
+  .photo-upload-zone .remove-photo{
+    position:absolute; top:8px; right:8px;
+    background: rgba(0,0,0,0.6); color:#fff; border:none; border-radius: 3px;
+    font-size: 10px; padding: 4px 8px; cursor:pointer; font-family: var(--type);
+  }
+
+  .search-panel{ margin-bottom: 18px; position: relative; }
+  .searchbar{ display:flex; gap:8px; }
+  .searchbar input[type=text]{
+    flex:1;
+    font-family: var(--body);
+    font-size: 14.5px;
+    padding: 11px 13px;
+    background: var(--polaroid);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 2px;
+    color: var(--ink);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  }
+  .searchbar input[type=text]:focus{ outline: none; border-color: var(--dusty-red-soft); }
+  .searchbar input[type=text]::placeholder{ color: var(--ink-faint); font-style:italic; }
+
+  .filter-toggle-btn{ position: relative; }
+  .filter-badge{
+    position:absolute; top:-6px; right:-6px;
+    background: var(--dusty-red); color:#fdf6ee;
+    font-family: var(--type); font-size: 9px;
+    width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .tag-dropdown{
+    position: absolute; top: calc(100% + 6px); right: 0; width: 240px;
+    background: var(--polaroid); border: 1px solid rgba(0,0,0,0.18);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25); border-radius: 3px; z-index: 30; display: none;
+  }
+  .tag-dropdown.open{ display:block; }
+  .tag-dropdown .dd-header{
+    padding: 10px 12px 6px; font-family: var(--type); font-size: 10px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tag-dropdown .dd-list{ max-height: 200px; overflow-y: auto; padding: 0 12px; }
+  .tag-dropdown .dd-list label{
+    display:flex; align-items:center; gap:8px; font-family: var(--body); font-size: 13px;
+    color: var(--ink); padding: 6px 0; cursor: pointer;
+  }
+  .tag-dropdown .dd-list label input{ accent-color: var(--dusty-red); }
+  .tag-dropdown .dd-empty{ padding: 14px 12px; font-family: var(--type); font-size: 11.5px; color: var(--ink-faint); }
+  .tag-dropdown .dd-footer{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 8px 12px; border-top: 1px dashed rgba(0,0,0,0.15);
+  }
+  .tag-dropdown .dd-footer button{ background:none; border:none; cursor:pointer; font-family: var(--type); font-size: 11px; }
+  .tag-dropdown .clear-btn{ color: var(--dusty-red); }
+  .tag-dropdown .done-btn{ color: var(--ink-soft); }
+
+  .btn{
+    font-family: var(--type); font-size: 11.5px; padding: 9px 14px; border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2); background: var(--paper); color: var(--ink-soft);
+    cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn.primary{ background: var(--dusty-red); border-color: var(--dusty-red); color: #fdf6ee; }
+  .btn.small{ padding: 6px 10px; font-size: 10.5px; }
+  .btn.ghost{ background: rgba(255,255,255,0.5); border-color: rgba(0,0,0,0.12); color: var(--ink-soft); box-shadow:none; }
+  .btn.danger-ghost{ background: rgba(255,255,255,0.5); border-color: rgba(0,0,0,0.12); color: var(--dusty-red); box-shadow:none; }
+
+  .active-filters{ display:flex; flex-wrap:wrap; gap:6px; margin-top: 10px; }
+  .active-filters .tape{ font-size: 10px; padding: 4px 9px; }
+  .active-filters .tape .x{ margin-left: 6px; cursor:pointer; }
+
+  .count-row{
+    font-family: var(--type); font-size: 11px; color: rgba(255,255,255,0.85);
+    margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  .video-list{ display:flex; flex-direction:column; gap: 20px; }
+  .video-card{
+    background: var(--polaroid); padding: 12px 12px 14px;
+    box-shadow: 0 4px 9px rgba(0,0,0,0.25); position: relative;
+  }
+  .video-card:nth-child(4n+1){ transform: rotate(-1.1deg); }
+  .video-card:nth-child(4n+2){ transform: rotate(0.9deg); }
+  .video-card:nth-child(4n+3){ transform: rotate(-0.6deg); }
+  .video-card:nth-child(4n+4){ transform: rotate(1.2deg); }
+  .video-card .pin{
+    position:absolute; top:-9px; left: 50%; transform: translateX(-50%);
+    width:14px; height:14px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #d9847a, var(--dusty-red) 70%);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.4);
+  }
+  .video-card .title-row{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding-top: 4px; }
+  .video-card h3{ font-family: var(--hand); font-weight: 700; font-size: 22px; margin: 0; color: var(--ink); }
+  .video-card .meta{ font-family: var(--type); font-size: 10.5px; color: var(--ink-faint); margin: 2px 0 10px; }
+  .video-card .tags{ display:flex; flex-wrap:wrap; gap: 6px; margin-bottom: 10px; }
+  .video-card .tags .tape{ font-size: 10px; padding: 4px 9px; transform: rotate(-1.5deg); }
+  .video-card .tags .tape:nth-child(even){ transform: rotate(1.2deg); }
+  .video-card .actions{
+    display:flex; gap:10px; align-items:center;
+    border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 9px; margin-top: 2px;
+  }
+  .video-card .actions a.open-link{
+    font-family: var(--type); font-size: 11.5px; color: var(--rec-red); text-decoration:none; font-weight: 700;
+  }
+  .video-card .actions a.open-link:hover{ text-decoration: underline; }
+
+  .empty{ text-align:center; padding: 50px 20px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .empty .big{ font-size: 34px; margin-bottom: 10px; opacity:0.8; }
+  .empty p{ font-family: var(--hand); font-size: 20px; }
+
+  .load-msg{ text-align:center; padding: 40px; color: rgba(255,255,255,0.85); font-family: var(--hand); font-size:20px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+  .modal-overlay{
+    position: fixed; inset:0; background: rgba(30,22,14,0.6);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding: 24px 14px; overflow-y:auto; z-index: 50;
+  }
+  .modal{
+    background: var(--paper); border-radius: 4px; max-width: 480px; width:100%;
+    padding: 22px 20px; border: 1px solid rgba(0,0,0,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .modal h2{ font-family: var(--hand); font-weight:700; font-size:26px; margin: 0 0 4px; color: var(--ink); }
+  .modal .sub{ font-family: var(--type); font-size: 11px; color: var(--ink-faint); margin-bottom: 18px; }
+  .field{ margin-bottom: 15px; }
+  .field label{
+    display:block; font-family: var(--type); font-size: 10px; font-weight: 600; color: var(--ink-soft);
+    margin-bottom: 5px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .field input[type=text], .field input[type=url], .field input[type=date], .field textarea{
+    width:100%; font-family: var(--body); font-size: 14px; padding: 9px 11px;
+    border: 1px solid rgba(0,0,0,0.18); border-radius: 2px; background: var(--polaroid); color: var(--ink);
+  }
+  .field input:focus, .field textarea:focus{ outline:none; border-color: var(--dusty-red-soft); }
+  .field .hint{ font-family: var(--type); font-size: 10.5px; color: var(--ink-faint); margin-top: 4px; }
+  .tag-input-row{
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+    border: 1px solid rgba(0,0,0,0.18); border-radius: 2px; padding: 7px 9px; background: var(--polaroid);
+  }
+  .tag-input-row .tag-pill{
+    font-family: var(--type); font-size: 10.5px; background: var(--tape-yellow); color: var(--ink-soft);
+    padding: 4px 8px 4px 10px; border-radius: 2px; display:flex; align-items:center; gap:6px;
+  }
+  .tag-input-row .tag-pill button{ border:none; background:none; cursor:pointer; color: var(--ink-soft); font-size: 14px; line-height:1; padding:0; }
+  .tag-input-row input{ flex:1; min-width: 100px; border:none; outline:none; background:none; font-size: 13px; padding: 4px; font-family: var(--body); color: var(--ink); }
+  .suggest-row{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .suggest-row .s{
+    font-family: var(--type); font-size:10px; padding:3px 8px; border-radius:2px;
+    background: var(--paper-warm); color: var(--ink-soft); cursor:pointer; border: 1px solid rgba(0,0,0,0.1);
+  }
+  .modal-actions{
+    display:flex; justify-content:flex-end; gap:10px; margin-top: 18px;
+    padding-top: 14px; border-top: 1px dashed rgba(0,0,0,0.2);
+  }
+  .error-text{ color: var(--rec-red); font-family: var(--type); font-size:11px; margin-top:4px; }
+
+  .fab{ position: sticky; bottom: 0; display:flex; justify-content:center; padding: 16px 0 0; }
+  .fab .btn{ box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header-wrap">
+    <div class="photo-upload-zone" id="photoUploadZone">
+      <div class="placeholder" id="photoPlaceholder">
+        <span class="plus">+</span>
+        add family photo
+      </div>
+      <img id="headerPhotoImg" style="display:none;" alt="Family photo" />
+      <button class="remove-photo" id="removePhotoBtn" style="display:none;">remove</button>
+      <input type="file" id="photoFileInput" accept="image/*" style="display:none;" />
+    </div>
+  </div>
+
+  <div class="search-panel">
+    <div class="searchbar">
+      <input type="text" id="searchInput" placeholder="Search keywords" autocomplete="off" />
+      <button class="btn filter-toggle-btn" id="filterToggleBtn">
+        tags
+        <span class="filter-badge" id="filterBadge" style="display:none;">0</span>
+      </button>
+    </div>
+
+    <div class="tag-dropdown" id="tagDropdown">
+      <div class="dd-header">filter by tag</div>
+      <div class="dd-list" id="ddList"></div>
+      <div class="dd-empty" id="ddEmpty" style="display:none;">no tags yet — add some when you log a video</div>
+      <div class="dd-footer">
+        <button class="clear-btn" id="clearFiltersBtn">clear filters</button>
+        <button class="done-btn" id="doneFilterBtn">done</button>
+      </div>
+    </div>
+
+    <div class="active-filters" id="activeFilters"></div>
+  </div>
+
+  <div class="count-row">
+    <span id="countText">loading archive…</span>
+    <button class="btn small" id="addBtn">+ add video</button>
+  </div>
+
+  <div class="video-list" id="videoList"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="big">📼</div>
+    <p id="emptyMsg">no tapes logged yet</p>
+  </div>
+
+  <div class="fab" id="fabWrap" style="display:none;">
+    <button class="btn primary" id="addBtn2">+ add a video</button>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+  // ---- Supabase connection ----
+  const SUPABASE_URL = 'https://qvokroadegihvwufmjlj.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2b2tyb2FkZWdpaHZ3dWZtamxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMTM5NTcsImV4cCI6MjEwNDc4OTk1N30.CiBAbfh8fAFY3vdBb7JUNVAdFNNBaWSC-YXsrpOGrkQ';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let videos = [];
+  let editingId = null;
+  let searchQuery = '';
+  let selectedTags = [];
+  let currentTags = [];
+  let loaded = false;
+
+  const videoListEl = document.getElementById('videoList');
+  const emptyStateEl = document.getElementById('emptyState');
+  const emptyMsgEl = document.getElementById('emptyMsg');
+  const countTextEl = document.getElementById('countText');
+  const searchInput = document.getElementById('searchInput');
+  const modalRoot = document.getElementById('modalRoot');
+  const fabWrap = document.getElementById('fabWrap');
+
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+  const filterBadge = document.getElementById('filterBadge');
+  const tagDropdown = document.getElementById('tagDropdown');
+  const ddList = document.getElementById('ddList');
+  const ddEmpty = document.getElementById('ddEmpty');
+  const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+  const doneFilterBtn = document.getElementById('doneFilterBtn');
+  const activeFiltersEl = document.getElementById('activeFilters');
+
+  const photoUploadZone = document.getElementById('photoUploadZone');
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+  const headerPhotoImg = document.getElementById('headerPhotoImg');
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
+  const photoFileInput = document.getElementById('photoFileInput');
+
+  const PHOTO_BUCKET = 'Photo';
+  const PHOTO_FILENAME = 'family-photo';
+
+  async function loadHeaderPhoto(){
+    const { data } = sb.storage.from(PHOTO_BUCKET).getPublicUrl(PHOTO_FILENAME);
+    if(data && data.publicUrl){
+      // bust cache so updates show immediately
+      const img = new Image();
+      img.onload = () => {
+        headerPhotoImg.src = data.publicUrl + '?t=' + Date.now();
+        headerPhotoImg.style.display = 'block';
+        photoPlaceholder.style.display = 'none';
+        removePhotoBtn.style.display = 'block';
+      };
+      img.onerror = () => { /* no photo uploaded yet — leave placeholder showing */ };
+      img.src = data.publicUrl + '?t=' + Date.now();
+    }
+  }
+
+  photoUploadZone.addEventListener('click', (e) => {
+    if(e.target === removePhotoBtn) return;
+    photoFileInput.click();
+  });
+
+  photoFileInput.addEventListener('change', async () => {
+    const file = photoFileInput.files[0];
+    if(!file) return;
+    if(file.size > 8 * 1024 * 1024){
+      alert('That image is a bit large — try one under about 8MB.');
+      return;
+    }
+    const { error } = await sb.storage.from(PHOTO_BUCKET).upload(PHOTO_FILENAME, file, { upsert: true });
+    if(error){
+      console.error('Photo upload error', error);
+      alert("Couldn't save that photo — please try again.");
+      return;
+    }
+    loadHeaderPhoto();
+  });
+
+  removePhotoBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if(!confirm('Remove this photo?')) return;
+    const { error } = await sb.storage.from(PHOTO_BUCKET).remove([PHOTO_FILENAME]);
+    if(error){ console.error('Remove error', error); }
+    headerPhotoImg.src = '';
+    headerPhotoImg.style.display = 'none';
+    photoPlaceholder.style.display = 'flex';
+    removePhotoBtn.style.display = 'none';
+  });
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ---------- load / save via Supabase ---------- */
+  async function loadVideos(){
+    videoListEl.innerHTML = '<div class="load-msg">loading archive…</div>';
+    const { data, error } = await sb.from('Video').select('*').order('created_at', { ascending: false });
+    if(error){
+      console.error('Load error', error);
+      videoListEl.innerHTML = '<div class="load-msg">couldn\'t load the archive — check your connection and try refreshing</div>';
+      return;
+    }
+    // map DB column names (capitalized) to internal lowercase fields
+    videos = (data || []).map(row => ({
+      id: row.id,
+      title: row.Title,
+      link: row.Link,
+      date: row.Date,
+      tags: row.Tags || [],
+      notes: row.Notes,
+      created_at: row.created_at
+    }));
+    loaded = true;
+    render();
+  }
+
+  function toDbEntry(entry){
+    return {
+      Title: entry.title,
+      Link: entry.link,
+      Date: entry.date,
+      Tags: entry.tags,
+      Notes: entry.notes
+    };
+  }
+
+  async function insertVideo(entry){
+    const { error } = await sb.from('Video').insert([toDbEntry(entry)]);
+    if(error){ console.error('Insert error', error); alert("Couldn't save — please try again."); return false; }
+    return true;
+  }
+
+  async function updateVideo(id, entry){
+    const { error } = await sb.from('Video').update(toDbEntry(entry)).eq('id', id);
+    if(error){ console.error('Update error', error); alert("Couldn't save — please try again."); return false; }
+    return true;
+  }
+
+  async function removeVideo(id){
+    const { error } = await sb.from('Video').delete().eq('id', id);
+    if(error){ console.error('Delete error', error); alert("Couldn't delete — please try again."); return false; }
+    return true;
+  }
+
+  function allTags(){
+    const set = new Set();
+    videos.forEach(v => (v.tags||[]).forEach(t => set.add(t)));
+    return Array.from(set).sort();
+  }
+
+  function matchesFilters(v){
+    const hay = [v.title||'', v.notes||'', v.date||'', ...(v.tags||[])].join(' ').toLowerCase();
+    if(searchQuery){
+      const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+      if(!terms.every(t => hay.includes(t))) return false;
+    }
+    if(selectedTags.length > 0){
+      const vTags = v.tags || [];
+      if(!selectedTags.every(t => vTags.includes(t))) return false;
+    }
+    return true;
+  }
+
+  function renderTagDropdown(){
+    const tags = allTags();
+    if(tags.length === 0){
+      ddList.innerHTML = '';
+      ddEmpty.style.display = 'block';
+    } else {
+      ddEmpty.style.display = 'none';
+      ddList.innerHTML = tags.map(t => `
+        <label>
+          <input type="checkbox" data-tag="${escapeHtml(t)}" ${selectedTags.includes(t) ? 'checked' : ''} />
+          ${escapeHtml(t)}
+        </label>
+      `).join('');
+      ddList.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const t = cb.getAttribute('data-tag');
+          if(cb.checked){ if(!selectedTags.includes(t)) selectedTags.push(t); }
+          else{ selectedTags = selectedTags.filter(x => x !== t); }
+          updateFilterBadge();
+          render();
+        });
+      });
+    }
+    updateFilterBadge();
+  }
+
+  function updateFilterBadge(){
+    if(selectedTags.length > 0){
+      filterBadge.style.display = 'flex';
+      filterBadge.textContent = selectedTags.length;
+    } else {
+      filterBadge.style.display = 'none';
+    }
+    activeFiltersEl.innerHTML = selectedTags.map(t => `
+      <span class="tape">${escapeHtml(t)}<span class="x" data-tag="${escapeHtml(t)}">×</span></span>
+    `).join('');
+    activeFiltersEl.querySelectorAll('.x').forEach(x => {
+      x.addEventListener('click', () => {
+        const t = x.getAttribute('data-tag');
+        selectedTags = selectedTags.filter(v => v !== t);
+        renderTagDropdown();
+        render();
+      });
+    });
+  }
+
+  filterToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tagDropdown.classList.toggle('open');
+    if(tagDropdown.classList.contains('open')) renderTagDropdown();
+  });
+  doneFilterBtn.addEventListener('click', () => tagDropdown.classList.remove('open'));
+  clearFiltersBtn.addEventListener('click', () => { selectedTags = []; renderTagDropdown(); render(); });
+  document.addEventListener('click', (e) => {
+    if(!tagDropdown.contains(e.target) && e.target !== filterToggleBtn && !filterToggleBtn.contains(e.target)){
+      tagDropdown.classList.remove('open');
+    }
+  });
+
+  function truncate(s, n){ return s.length > n ? s.slice(0,n-1) + '…' : s; }
+  function formatDate(iso){
+    try{
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+    }catch(e){ return iso; }
+  }
+
+  function render(){
+    if(!loaded) return;
+
+    let list = videos.filter(matchesFilters);
+
+    countTextEl.textContent = videos.length === 0 ? '' : `${list.length} of ${videos.length} clip${videos.length===1?'':'s'}`;
+
+    if(videos.length === 0){
+      videoListEl.innerHTML = '';
+      emptyStateEl.style.display = 'block';
+      emptyMsgEl.textContent = 'no tapes logged yet — add your first below';
+      fabWrap.style.display = 'none';
+      return;
+    }
+    if(list.length === 0){
+      videoListEl.innerHTML = '';
+      emptyStateEl.style.display = 'block';
+      emptyMsgEl.textContent = 'nothing found — try different keywords or tags';
+      fabWrap.style.display = 'flex';
+      return;
+    }
+    emptyStateEl.style.display = 'none';
+    fabWrap.style.display = 'flex';
+
+    videoListEl.innerHTML = list.map(v => {
+      const dateStr = v.date ? formatDate(v.date) : '—';
+      return `
+      <div class="video-card" data-id="${v.id}">
+        <div class="pin"></div>
+        <div class="title-row">
+          <h3>${escapeHtml(v.title || 'Untitled clip')}</h3>
+        </div>
+        <div class="meta">${escapeHtml(dateStr)}${v.notes ? ' · ' + escapeHtml(truncate(v.notes, 50)) : ''}</div>
+        <div class="tags">
+          ${(v.tags||[]).map(t => `<span class="tape">${escapeHtml(t)}</span>`).join('')}
+        </div>
+        <div class="actions">
+          ${v.link ? `<a class="open-link" href="${escapeHtml(v.link)}" target="_blank" rel="noopener">▶ play</a>` : '<span style="font-family:var(--type);font-size:11px;color:var(--ink-faint);">no link added</span>'}
+          <button class="btn ghost small edit-btn" data-id="${v.id}">edit</button>
+          <button class="btn danger-ghost small del-btn" data-id="${v.id}">delete</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    videoListEl.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => openModal(b.getAttribute('data-id'))));
+    videoListEl.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => deleteVideo(b.getAttribute('data-id'))));
+  }
+
+  async function deleteVideo(id){
+    const v = videos.find(x=>String(x.id)===String(id));
+    if(!v) return;
+    if(!confirm(`Delete "${v.title || 'this clip'}"? This can't be undone.`)) return;
+    const ok = await removeVideo(id);
+    if(ok){
+      videos = videos.filter(x=>String(x.id)!==String(id));
+      render();
+    }
+  }
+
+  function openModal(id){
+    editingId = id || null;
+    const v = id ? videos.find(x=>String(x.id)===String(id)) : null;
+    currentTags = v ? (v.tags||[]).slice() : [];
+
+    modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <h2>${v ? 'Edit this clip' : 'Add a video'}</h2>
+        <div class="sub">tag who's in it, the occasion, and the date — so it's findable later.</div>
+
+        <div class="field">
+          <label for="f-title">title</label>
+          <input type="text" id="f-title" placeholder="Dad's 50th birthday party" value="${escapeHtml(v?v.title:'')}" />
+        </div>
+
+        <div class="field">
+          <label for="f-link">google drive link</label>
+          <input type="url" id="f-link" placeholder="https://drive.google.com/file/d/..." value="${escapeHtml(v?v.link||'':'')}" />
+          <div class="hint">right-click the file in Drive → Share → Copy link</div>
+        </div>
+
+        <div class="field">
+          <label for="f-date">date</label>
+          <input type="date" id="f-date" value="${v&&v.date?v.date:''}" />
+        </div>
+
+        <div class="field">
+          <label>tags</label>
+          <div class="tag-input-row" id="tagRow">
+            <input type="text" id="f-tag-input" placeholder="type a tag, press enter" />
+          </div>
+          <div class="suggest-row" id="suggestRow"></div>
+          <div id="tagError" class="error-text" style="display:none;">add at least one tag so this clip can be found later</div>
+        </div>
+
+        <div class="field">
+          <label for="f-notes">notes <span style="text-transform:none;font-weight:400;color:var(--ink-faint);">(optional)</span></label>
+          <textarea id="f-notes" rows="2" placeholder="anything worth remembering about this one">${escapeHtml(v?v.notes||'':'')}</textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn ghost" id="cancelBtn">cancel</button>
+          <button class="btn primary" id="saveBtn">${v ? 'save changes' : 'add video'}</button>
+        </div>
+      </div>
+    </div>`;
+
+    renderTagPills();
+    renderSuggestions();
+
+    const overlay = document.getElementById('overlay');
+    overlay.addEventListener('click', (e) => { if(e.target===overlay) closeModal(); });
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('saveBtn').addEventListener('click', saveModal);
+
+    const tagInput = document.getElementById('f-tag-input');
+    tagInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ','){
+        e.preventDefault();
+        addTagFromInput();
+      } else if(e.key === 'Backspace' && tagInput.value === '' && currentTags.length){
+        currentTags.pop();
+        renderTagPills();
+      }
+    });
+    document.getElementById('f-title').focus();
+  }
+
+  function addTagFromInput(){
+    const input = document.getElementById('f-tag-input');
+    let val = input.value.trim().replace(/,$/,'');
+    if(!val) return;
+    val = val.toLowerCase();
+    if(!currentTags.includes(val)) currentTags.push(val);
+    input.value = '';
+    renderTagPills();
+    document.getElementById('tagError').style.display = 'none';
+  }
+
+  function renderTagPills(){
+    const row = document.getElementById('tagRow');
+    const input = document.getElementById('f-tag-input');
+    row.querySelectorAll('.tag-pill').forEach(p=>p.remove());
+    currentTags.forEach(t => {
+      const pill = document.createElement('span');
+      pill.className = 'tag-pill';
+      pill.innerHTML = `${escapeHtml(t)} <button type="button" aria-label="Remove ${escapeHtml(t)}">×</button>`;
+      pill.querySelector('button').addEventListener('click', () => {
+        currentTags = currentTags.filter(x=>x!==t);
+        renderTagPills();
+      });
+      row.insertBefore(pill, input);
+    });
+  }
+
+  function renderSuggestions(){
+    const row = document.getElementById('suggestRow');
+    const suggestions = allTags().filter(t => !currentTags.includes(t)).slice(0, 12);
+    if(suggestions.length === 0){ row.innerHTML=''; return; }
+    row.innerHTML = suggestions.map(t => `<span class="s" data-tag="${escapeHtml(t)}">+ ${escapeHtml(t)}</span>`).join('');
+    row.querySelectorAll('.s').forEach(el => {
+      el.addEventListener('click', () => {
+        const t = el.getAttribute('data-tag');
+        if(!currentTags.includes(t)) currentTags.push(t);
+        renderTagPills();
+        renderSuggestions();
+      });
+    });
+  }
+
+  function closeModal(){
+    modalRoot.innerHTML = '';
+    editingId = null;
+    currentTags = [];
+  }
+
+  async function saveModal(){
+    addTagFromInput();
+    const title = document.getElementById('f-title').value.trim();
+    const link = document.getElementById('f-link').value.trim();
+    const date = document.getElementById('f-date').value;
+    const notes = document.getElementById('f-notes').value.trim();
+
+    if(currentTags.length === 0){
+      document.getElementById('tagError').style.display = 'block';
+      return;
+    }
+    if(link && !/^https?:\/\//i.test(link)){
+      alert('That link doesn\'t look like a valid URL — it should start with https://');
+      return;
+    }
+
+    const entry = {
+      title: title || 'Untitled clip',
+      link, notes,
+      date: date || null,
+      tags: currentTags.slice()
+    };
+
+    let ok;
+    if(editingId){
+      ok = await updateVideo(editingId, entry);
+    } else {
+      ok = await insertVideo(entry);
+    }
+    if(ok){
+      closeModal();
+      await loadVideos();
+    }
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => openModal(null));
+  document.getElementById('addBtn2').addEventListener('click', () => openModal(null));
+
+  searchInput.addEventListener('input', () => { searchQuery = searchInput.value; render(); });
+
+  loadHeaderPhoto();
+  loadVideos();
+})();
+</script>
+</body>
+</html>
